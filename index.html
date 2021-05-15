@@ -1,10 +1,422 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>zzzzzhhhhhhao</title>
+	<meta charset="UTF-8">
+	<title>银行家算法</title>
+	<link rel="stylesheet" type="text/css" href="aynu_zh.css">
+	<style type="text/css">
+		.box>table{
+		    height: 12%;
+		    font-size: 14px;
+		    font-weight: bold;
+		    text-align: center;
+		    line-height: 200%;
+		    letter-spacing: 1px;
+		}
+		.box>.box_title{
+		    height: 12%;
+		    font-size: 16px;
+		    font-weight: bold;
+		    text-align: center;
+		    line-height: 200%;
+		    letter-spacing: 3px;
+		    background: #F2F2F2;
+		}
+		.box td{
+		    border: 1px solid #fff;
+		    margin: 0 0 -1px -1px;
+		}
+		.msg{
+			margin-left: 5%;
+		}
+		.begin{
+			margin-left: 28%;
+			margin-top: 30px;
+		}
+		.info{
+			margin-top: 20px;
+			margin-left: 20%;
+		}
+		.info input{
+			width: 40px;
+		}
+	</style>
+	<script type="text/javascript" src="jquery-1.11.3.min.js"></script>
+	<script type="text/javascript">
+		// 进程对资源的最大需求数目
+		let Max = [
+					[7,5,3],
+					[3,2,2],
+					[9,0,2],
+					[2,2,2],
+					[4,3,3]
+				];
+
+		// 进程已经分配好的资源数目
+		let Allocation = [
+					[0,1,0],
+					[2,0,0],
+					[3,0,2],
+					[2,1,1],
+					[0,0,2]
+				];
+
+		// 进程所需要的资源数目
+		let Need = [[],[],[],[],[]];
+
+		// 成功时使用的Available
+		let Yes_Available = [3,3,2];
+		// 失败时使用的Available
+		let No_Available = [3,3,2];
+		// 系统当前剩余的资源
+		let Available = [3,3,2];
+		// 进程标志
+		let flag_Process = [false,false,false,false,false];
+		// 计数器
+		let count = 0;
+		// 大for判定位
+		let flagOut = false;
+		// 内for判定位
+		let flagIn = true;
+		// 安全序列
+		let safeList = [];
+		// 表格对象数组
+		let tds_list = [];
+		// 下标数组
+		let indexs = [];
+
+		const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
+ 
+		const repeatedGreetings = async (msg) => {
+			console.log("flag_Process = "+flag_Process);
+			// alert("count = "+count);
+			let fail = 0;
+			while (count != 5) { // 未找到安全序列
+				flagOut = false;
+				// 失败数目
+				fail = 0;
+				// 遍历进程
+				for (let i = 0; i < Need.length; i++) {
+					// 若是该进程已经处理过，则直接跳过
+					if(flag_Process[i]) continue;
+					// 内部标志，初始化为true
+					flagIn = true;
+
+					// 遍历该进程所需要的资源数目
+					for (let j = 0; j < 3; j++) {
+						// 出现无法满足的条件是，设置flagIn，并跳出循环
+						if(Available[j] < Need[i][j]){
+							flagIn = false;
+							fail++;
+							break;
+						}
+						// Need[i][j] = Max[i][j]-Allocation[i][j];
+					}
+
+					if(flagIn){
+
+						$(".msg").text("正在寻找中....");
+						await sleep(600);
+						$(".msg").text("正在分配中....");
+						$("#P"+i).css({
+							"background":"skyblue",
+							"color":"#fff"
+						});
+						await sleep(1500);
+						for(let k = 0; k < 3; k++){
+							Available[k] += Allocation[i][k];
+						}
+						safeList[count] = i;
+						flag_Process[i] = true;
+						flagOut = true;
+						count++;
+						$("#P"+i).css("background","green");
+						$(tds_list[i][4]).text(Available);
+						$(tds_list[i][5]).text("true");
+						// console.log("执行完毕");
+					}else if(fail == (5 - count)){
+						break;
+					}
+				}
+				if(!flagOut){
+					$(".msg").text("无法得到安全序列！！！");
+					$(".msg").css({
+						"color":"red",
+					})
+					await sleep(1500);
+					break;
+				}
+			}
+
+			if(count == 5){
+				$(".msg").text("可以分配，安全序列为："+safeList);
+				$(".msg").css({
+					"color":"green",
+				})
+				await sleep(2000);
+				for (var i = 0; i < tds_list.length; i++) {
+					save_now_data(tds_list[i],indexs[i]);
+				}
+				console.log("Yes_Available = "+Yes_Available);
+				for (var i = 0; i < Yes_Available.length; i++) {
+					Available[i] = Yes_Available[i];
+				}
+			}else{
+				$(".msg").text("分配失败...");
+				$(".msg").css({
+					"color":"red",
+				})
+				console.log("No_Available = "+No_Available);
+				for (var i = 0; i < No_Available.length; i++) {
+					Available[i] = No_Available[i];
+				}
+			}
+
+			regression();
+		}
+
+		/* 表格初始化 */
+		function init(objs,index){
+			for (var i = 1; i < objs.length-1; i++) {
+				switch (i) {
+					case 1:
+						$(objs[i]).text(Max[index]);
+						break;
+					case 2:
+						$(objs[i]).text(Allocation[index]);
+						break;
+					case 3:
+						$(objs[i]).text(Need[index]);
+						break;
+				}
+			}
+		}
+
+		/* 清空Available数组及Finish数组 */
+		function save_now_data(objs,index){
+			$(objs[4]).text("");
+			$(objs[5]).text("");
+			$("#P"+index).css({
+				"background":"#F2F2F2",
+				"color":"#000"
+			});
+		}
+
+		/* 检测是否符合要求 */
+		function isOk(pid,arr){
+			console.log("isOk --- Available = "+Available);
+			let ok = true;
+			for (var i = 0; i < Available.length; i++) {
+				if(Available[i] < arr[i]){
+					ok = false;
+					$(".msg").text("Request > Available，P"+pid+"进程等待");
+					$(".msg").css({
+						"color":"orange",
+					})
+					break;
+				}
+			}
+			for (var i = 0; i < Need[pid].length; i++) {
+				if(Need[pid][i] < arr[i]){
+					ok = false;
+					$(".msg").text("Request > Need，P"+pid+"进程等待");
+					$(".msg").css({
+						"color":"orange",
+					})
+					break;
+				}
+			}
+			console.log(pid+" -- "+ok);
+			return ok;
+		}
+
+		/* 拟分配 */
+		function modify(pid,arr){
+			// alert("modify");
+			/* 数据更新 */
+			for (var i = 0; i < Available.length; i++){
+				No_Available[i] = Available[i];
+				Available[i] -= arr[i];
+				Yes_Available[i] -= arr[i];
+				Need[pid][i] -= arr[i];
+				Allocation[pid][i] += parseInt(arr[i]);
+			}
+			$(".msg").text("初始Available："+Available);
+			$(".msg").css({
+				"color":"#000",
+			})
+			/* 修改表格数据 */
+			init(tds_list[pid],pid);
+		}
+
+		/* Button - 数据复位 */
+		function reset(){
+
+			// 进程对资源的最大需求数目
+			Max = [
+					[7,5,3],
+					[3,2,2],
+					[9,0,2],
+					[2,2,2],
+					[4,3,3]
+				];
+
+			// 进程已经分配好的资源数目
+			Allocation = [
+					[0,1,0],
+					[2,0,0],
+					[3,0,2],
+					[2,1,1],
+					[0,0,2]
+				];
+
+			// 进程所需要的资源数目
+			Need = [[],[],[],[],[]];
+
+			// 系统当前剩余的资源
+			Available = [3,3,2];
+			// 进程标志
+			flag_Process = [false,false,false,false,false];
+			// 计数器
+			count = 0;
+			// 大for判定位
+			flagOut = false;
+			// 内for判定位
+			flagIn = true;
+			// 安全序列
+			safeList = [];
+			// 表格对象数组
+			tds_list = [];
+			// 下标数组
+			indexs = [];
+		}
+
+		/*  */
+		function regression(){
+			// alert("regression");
+			flag_Process = [false,false,false,false,false];
+			count = 0;
+			flagOut = false;
+			flagIn = true;
+		}
+
+		function main(){
+			// console.log($("#selecter").val());
+			let option_val = $("#selecter").val();
+			let A,B,C;
+			if(option_val != -1){
+				A = $("#A").val();
+				B = $("#B").val();
+				C = $("#C").val();
+				if(A != "" && B!= "" && C!=""){
+					let arr = [A,B,C];
+					// alert(option_val+" - "+arr);
+					if(isOk(option_val,arr)){
+						modify(option_val,arr);
+						repeatedGreetings();
+					}
+				}else{
+					alert("请输入完整");
+				}
+			}else{
+				repeatedGreetings();
+			}
+
+		}
+		
+
+		$(function(){
+			// 计算Need，即进程需要的资源数目
+			for (let i = 0; i < 5; i++) {
+				// alert(Max[i]+" -- "+Allocation[i]);
+				for (let j = 0; j < 3; j++) {
+					Need[i][j] = Max[i][j]-Allocation[i][j];
+				}
+			}
+			// console.log("Need数组：\n"+Need);
+
+			$(".msg").text("初始Available："+Available);
+			$(".msg").css({
+				"color":"#000",
+			})
+
+			tds_list = [$("#P0 td"),$("#P1 td"),$("#P2 td"),$("#P3 td"),$("#P4 td")];
+			indexs = [0,1,2,3,4];
+			for (var i = 0; i < tds_list.length; i++) {
+				init(tds_list[i],indexs[i]);
+			}
+
+		})
+	</script>
 </head>
 <body>
-    <h1>Welcome!!!</h1>
+	<div class="box">
+		<h1 class="msg"></h1>
+		<table width="60%" class="box_title">
+			<tr width="100%">
+                <td width="10%">进程</td>
+                <td width="20%">Max</td>
+                <td width="20%">Allocation</td>
+                <td width="20%">Need</td>
+                <td width="20%">Available</td>
+                <td width="10%">Finish</td>
+            </tr>
+            <tr width="100%" id="P0">
+                <td width="10%">P0</td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="10%"></td>
+            </tr>
+            <tr width="100%" id="P1">
+                <td width="10%">P1</td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="10%"></td>
+            </tr>
+            <tr width="100%" id="P2">
+                <td width="10%">P2</td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="10%"></td>
+            </tr>
+            <tr width="100%" id="P3">
+                <td width="10%">P3</td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="10%"></td>
+            </tr>
+            <tr width="100%" id="P4">
+                <td width="10%">P4</td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="20%"></td>
+                <td width="10%"></td>
+            </tr>
+        </table>
+	</div>
+	<div class="info">
+		进程: 
+		<select name="process" id="selecter">
+			<option value="-1">---</option>
+			<option value="0">P0</option>
+			<option value="1">P1</option>
+			<option value="2">P2</option>
+			<option value="3">P3</option>
+			<option value="4">P4</option>
+		</select>
+		A: <input id="A" type="text">B: <input id="B" type="text">C: <input id="C" type="text">
+	</div>
+	<div class="begin">
+		<a href="#" class="a_update_show" onclick="main()">开始</a>
+	</div>
 </body>
 </html>
