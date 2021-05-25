@@ -113,6 +113,10 @@
 		let tds_list = [];
 		// 下标数组
 		let indexs = [];
+		// 当前请求的进程
+		let now_id = -1;
+		// 当前请求数组
+		let req_arr = [0,0,0];
 
 		const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay));
  
@@ -170,7 +174,11 @@
 					$(".msg").text("无法得到安全序列！！！");
 					$(".msg").css({
 						"color":"red",
-					})
+					});
+					$("#P"+now_id).css({
+						"background":"red",
+						"color":"#fff"
+					});
 					await sleep(1500);
 					break;
 				}
@@ -194,11 +202,30 @@
 				$(".msg").text("分配失败...");
 				$(".msg").css({
 					"color":"red",
-				})
+				});
+				$("#P"+now_id).css({
+					"background":"#F2F2F2",
+					"color":"#000"
+				});
 				console.log("No_Available = "+No_Available);
 				for (var i = 0; i < No_Available.length; i++) {
 					Available[i] = No_Available[i];
 				}
+				console.log("now_id = "+now_id);
+				console.log("");
+				if(now_id != -1){
+					console.log("恢复之前:"+Need[now_id]);
+					for(var i = 0; i< Need[now_id].length; i++){
+						Need[now_id][i] += parseInt(req_arr[i]);
+						Yes_Available[i] += parseInt(req_arr[i]);
+						Available[i] += parseInt(req_arr[i]);
+					}
+					console.log("恢复之后:"+Need[now_id]);
+					init(tds_list[now_id],now_id);
+					now_id = -1;
+					req_arr = [0,0,0];
+				}
+				
 			}
 
 			regression();
@@ -263,10 +290,12 @@
 		function modify(pid,arr){
 			// alert("modify");
 			/* 数据更新 */
+			now_id = pid;
 			for (var i = 0; i < Available.length; i++){
 				No_Available[i] = Available[i];
 				Available[i] -= arr[i];
 				Yes_Available[i] -= arr[i];
+				req_arr[i] = arr[i];
 				Need[pid][i] -= arr[i];
 				Allocation[pid][i] += parseInt(arr[i]);
 			}
@@ -318,6 +347,10 @@
 			tds_list = [];
 			// 下标数组
 			indexs = [];
+			// 当前进程id
+			now_id = -1;
+			// 当前请求数组
+			req_arr = [0,0,0];
 
 			// 计算Need，即进程需要的资源数目
 			for (let i = 0; i < 5; i++) {
