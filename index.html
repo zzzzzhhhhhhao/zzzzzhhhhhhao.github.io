@@ -218,16 +218,13 @@
 					for(var i = 0; i< Need[now_id].length; i++){
 						Need[now_id][i] += parseInt(req_arr[i]);
 						Yes_Available[i] += parseInt(req_arr[i]);
-						Available[i] += parseInt(req_arr[i]);
+						// Available[i] += parseInt(req_arr[i]);
 					}
 					console.log("恢复之后:"+Need[now_id]);
+					console.log("Available = "+Available)
 					init(tds_list[now_id],now_id);
-					now_id = -1;
-					req_arr = [0,0,0];
 				}
-				
 			}
-
 			regression();
 		}
 
@@ -385,6 +382,8 @@
 			count = 0;
 			flagOut = false;
 			flagIn = true;
+			now_id = -1;
+			req_arr = [0,0,0];
 		}
 
 		function main(){
